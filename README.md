@@ -4,7 +4,7 @@
 
 # Hey! I'm Filing Here
 
-This program 
+This program simulates an ext2 file system containing 3 things: 2 directories, a file of the string "Hello World\n", and a symlink pointing to that file.
 
 ## Building
 
@@ -15,9 +15,12 @@ In terminal, run:
 
 Show how to compile, mount, and example output of `ls -ain` your mounted
 filesystem.
+Run:
+```mkdir mnt``` 
+```./ext2-create```
+```sudo mount -o loop cs111-base.img mnt```
 
 ## Cleaning up
 
-Explain briefly how to unmount the filesystem, remove the mount directory, and
-clean up all binary files.
+run: make clean
 # cs111lab4

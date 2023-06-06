@@ -284,7 +284,7 @@ void write_block_bitmap(int fd) {
 		if (i >= 3 && i < 128) {
 			bitmap[i] = 0b00000000;
 		} else {
-			bitmap[i] =  0b11111111; //i < 3 || i >= 12
+			bitmap[i] =  0b11111111;
 		}
 	}
 	bitmap[2] = 0b01111111;
@@ -375,36 +375,36 @@ void write_inode_table(int fd) {
 	root_inode.i_block[0] = ROOT_DIR_BLOCKNO;
 	write_inode(fd, EXT2_ROOT_INO, &root_inode);
 
-	struct ext2_inode hello_world = {0};
-	hello_world.i_mode =
+	struct ext2_inode inode2 = {0};
+	inode2.i_mode =
 		EXT2_S_IFREG | EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IRGRP | EXT2_S_IROTH;
-	hello_world.i_uid = 1000;
-	hello_world.i_size = 12;
-	hello_world.i_atime = current_time;
-	hello_world.i_ctime = current_time;
-	hello_world.i_mtime = current_time;
-	hello_world.i_dtime = 0;
-	hello_world.i_gid = 1000;
-	hello_world.i_links_count = 1;
-	hello_world.i_blocks = 2;
-	hello_world.i_block[0] = HELLO_WORLD_FILE_BLOCKNO;
-	write_inode(fd, HELLO_WORLD_INO, &hello_world);
+	inode2.i_uid = 1000;
+	inode2.i_size = 12;
+	inode2.i_atime = current_time;
+	inode2.i_ctime = current_time;
+	inode2.i_mtime = current_time;
+	inode2.i_dtime = 0;
+	inode2.i_gid = 1000;
+	inode2.i_links_count = 1;
+	inode2.i_blocks = 2;
+	inode2.i_block[0] = HELLO_WORLD_FILE_BLOCKNO;
+	write_inode(fd, HELLO_WORLD_INO, &inode2);
 
-	struct ext2_inode hello = {0};
-	hello.i_mode =
+	struct ext2_inode inode3 = {0};
+	inode3.i_mode =
 		EXT2_S_IFLNK | EXT2_S_IRUSR | EXT2_S_IWUSR | EXT2_S_IRGRP | EXT2_S_IROTH;
-	hello.i_uid = 1000;
-	hello.i_size = 11;
-	hello.i_atime = current_time;
-	hello.i_ctime = current_time;
-	hello.i_mtime = current_time;
-	hello.i_dtime = 0;
-	hello.i_gid = 1000;
-	hello.i_links_count = 1;
-	hello.i_blocks = 0;
+	inode3.i_uid = 1000;
+	inode3.i_size = 11;
+	inode3.i_atime = current_time;
+	inode3.i_ctime = current_time;
+	inode3.i_mtime = current_time;
+	inode3.i_dtime = 0;
+	inode3.i_gid = 1000;
+	inode3.i_links_count = 1;
+	inode3.i_blocks = 0;
 
-	memcpy(&hello.i_block, "hello-world", 11);
-	write_inode(fd, HELLO_INO, &hello);
+	memcpy(&inode3.i_block, "hello-world", 11);
+	write_inode(fd, HELLO_INO, &inode3);
 }
 
 void write_root_dir_block(int fd) {
@@ -421,39 +421,39 @@ void write_root_dir_block(int fd) {
 
 	ssize_t bytes_remaining = BLOCK_SIZE;
 
-	struct ext2_dir_entry current_entry = {0};
-	dir_entry_set(current_entry, EXT2_ROOT_INO, ".");
-	dir_entry_write(current_entry, fd);
+	struct ext2_dir_entry curr_ent = {0};
+	dir_entry_set(curr_ent, EXT2_ROOT_INO, ".");
+	dir_entry_write(curr_ent, fd);
+	
+	bytes_remaining -= curr_ent.rec_len;
 
-	bytes_remaining -= current_entry.rec_len;
+	struct ext2_dir_entry parent_ent = {0};
+	dir_entry_set(parent_ent, EXT2_ROOT_INO, "..");
+	dir_entry_write(parent_ent, fd);
+	
+	bytes_remaining -= parent_ent.rec_len;
 
-	struct ext2_dir_entry parent_entry = {0};
-	dir_entry_set(parent_entry, EXT2_ROOT_INO, "..");
-	dir_entry_write(parent_entry, fd);
+	struct ext2_dir_entry lost_found_ent = {0};
+	dir_entry_set(lost_found_ent, LOST_AND_FOUND_INO, "lost+found");
+	dir_entry_write(lost_found_ent, fd);
+	
+	bytes_remaining -= lost_found_ent.rec_len;
 
-	bytes_remaining -= parent_entry.rec_len;
+	struct ext2_dir_entry hello_word_ent = {0};
+	dir_entry_set(hello_word_ent, HELLO_WORLD_INO, "hello-world");
+	dir_entry_write(hello_word_ent, fd);
+	
+	bytes_remaining -= hello_word_ent.rec_len;
 
-	struct ext2_dir_entry lost_found_entry = {0};
-	dir_entry_set(lost_found_entry, LOST_AND_FOUND_INO, "lost+found");
-	dir_entry_write(lost_found_entry, fd);
+	struct ext2_dir_entry hello_ent = {0};
+	dir_entry_set(hello_ent, HELLO_INO, "hello");
+	dir_entry_write(hello_ent, fd);
+	
+	bytes_remaining -= hello_ent.rec_len;
 
-	bytes_remaining -= lost_found_entry.rec_len;
-
-	struct ext2_dir_entry hello_world_entry = {0};
-	dir_entry_set(hello_world_entry, HELLO_WORLD_INO, "hello-world");
-	dir_entry_write(hello_world_entry, fd);
-
-	bytes_remaining -= hello_world_entry.rec_len;
-
-	struct ext2_dir_entry hello_entry = {0};
-	dir_entry_set(hello_entry, HELLO_INO, "hello");
-	dir_entry_write(hello_entry, fd);
-
-	bytes_remaining -= hello_entry.rec_len;
-
-	struct ext2_dir_entry fill_entry = {0};
-	fill_entry.rec_len = bytes_remaining;
-	dir_entry_write(fill_entry, fd);
+	struct ext2_dir_entry last_ent = {0};
+	last_ent.rec_len = bytes_remaining;
+	dir_entry_write(last_ent, fd);
 }
 
 void write_lost_and_found_dir_block(int fd) {
@@ -499,18 +499,14 @@ void write_hello_world_file_block(int fd) {
 
 int main(int argc, char *argv[]) {
 	int fd = open("cs111-base.img", O_CREAT | O_WRONLY, 0666);
-	printf("moooo");
 	if (fd == -1) {
-		printf("moo");
 		errno_exit("open");
 	}
 
 	if (ftruncate(fd, 0)) {
-		printf("moo2");
 		errno_exit("ftruncate");
 	}
 	if (ftruncate(fd, NUM_BLOCKS * BLOCK_SIZE)) {
-		printf("moo3");
 		errno_exit("ftruncate");
 	}
 
@@ -524,9 +520,7 @@ int main(int argc, char *argv[]) {
 	write_hello_world_file_block(fd);
 
 	if (close(fd)) {
-		printf("moo?");
 		errno_exit("close");
 	}
-	printf("moo good");
 	return 0;
 }
